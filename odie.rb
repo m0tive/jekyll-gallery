@@ -18,25 +18,44 @@ end
 
 module Jekyll
 
-class GalleryPost < Page
-    def initialize(site, base, dir, source, image)
+class GalleryPost < Post
+    def initialize(site, base, source, image)
         /^(.*)\.[^\.]*$/ =~ image
         basename = $1
 
         path = source[base.size()..-1] || ''
         path = path[/^\/?[^\/]+\/(.*)$/,1] || ''
 
-        @site = site
-        @base = base
-        @dir = File.join dir, path
-        @name = basename + '.html'
-
         @imageSource = source
         @imageName = image
 
-        self.process(@name)
-        self.read_yaml(File.join(base, '_layouts'), 'gallery_page.html')
+        super(site, base, path, basename + '.html')
+
+        #self.process(@name)
+        #self.read_yaml(File.join(base, '_layouts'), 'gallery_page.html')
+
         self.data['image'] = image
+    end
+
+    EXT_REGEX = /\.[^\.]*$/
+
+    def read_yaml(base, name)
+        # defer this to another file...
+        info = name.sub(EXT_REGEX, '.txt')
+        galleryLayout = self.site.config['gallery_layout'] || 'gallery_page.html'
+        if File.exists? File.join(@imageSource, info)
+            super(@imageSource, info)
+        else
+            super(File.join(@site.source, '_layouts'), galleryLayout) if self.data.nil?
+        end
+
+        # ensure there is a layout...
+        self.data['layout'] = galleryLayout.sub(EXT_REGEX, '') unless self.data.has_key? 'layout'
+    end
+
+    def template
+        self.site.config['gallery_permalink_style'] ||
+            '/gallery/:categories/:title.html'
     end
 
     def write(dest)
@@ -51,31 +70,7 @@ class GalleryPost < Page
         FileUtils.cp source, imageDest
     end
 
-    MATCHER = Post::MATCHER
-
-    # Post name validator. Post filenames must be like:
-    #   2008-11-05-my-awesome-post.textile
-    #
-    # Returns <Bool>
-    def self.valid?(name)
-      name =~ MATCHER
-    end
-
-    attr_accessor :date, :slug, :ext
-
-    # Extract information from the post filename
-    #   +name+ is the String filename of the post file
-    #
-    # Returns nothing
-    def process(name)
-      super(name)
-      m, cats, date, slug, ext = *name.match(MATCHER)
-      self.date = Time.parse(date)
-      self.slug = slug
-      self.ext = ext
-    rescue ArgumentError
-      raise FatalException.new("Gallery post #{name} does not have a valid date.")
-    end
+    def html?; true; end
 end
 
 class GalleryGenerator < Generator
@@ -89,15 +84,15 @@ class GalleryGenerator < Generator
             Dir.foreach_r(source) do |curDir, file|
                 next unless file.downcase =~ /\.(?:png|jpe?g|bmp)$/
                 next unless GalleryPost.valid? file
-                write_gallery_page(site, dir, curDir, file)
+                write_gallery_page(site, curDir, file)
             end
         else
             raise
         end
     end
 
-    def write_gallery_page(site, dir, source, file)
-        page = GalleryPost.new(site, site.source, dir, source, file)
+    def write_gallery_page(site, source, file)
+        page = GalleryPost.new(site, site.source, source, file)
         page.render(site.layouts, site.site_payload)
         page.write(site.dest)
         site.pages << page

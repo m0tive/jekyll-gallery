@@ -18,6 +18,8 @@ end
 
 module Jekyll
 
+class Site; attr_accessor :gallery; end
+
 class GalleryPost < Post
     def initialize(site, base, source, image)
         /^(.*)\.[^\.]*$/ =~ image
@@ -71,6 +73,49 @@ class GalleryPost < Post
     end
 
     def html?; true; end
+
+    def to_liquid
+        super.deep_merge({
+            "last"  => self.last,
+            "first" => self.first })
+    end
+
+    def first
+        item = self.site.gallery.first
+        if item != self
+            item
+        else
+            nil
+        end
+    end
+
+    def last
+        item = self.site.gallery.last
+        if item != self
+            item
+        else
+            nil
+        end
+    end
+
+    def next
+      pos = self.site.gallery.index(self)
+
+      if pos && pos < self.site.gallery.length-1
+        self.site.gallery[pos+1]
+      else
+        nil
+      end
+    end
+
+    def previous
+      pos = self.site.gallery.index(self)
+      if pos && pos > 0
+        self.site.gallery[pos-1]
+      else
+        nil
+      end
+    end
 end
 
 class GalleryGenerator < Generator
@@ -81,21 +126,20 @@ class GalleryGenerator < Generator
             dir = site.config['gallery_dir'] || 'gallery'
             source = File.join site.source, '_gallery'
 
+            site.gallery = []
+
+
             Dir.foreach_r(source) do |curDir, file|
                 next unless file.downcase =~ /\.(?:png|jpe?g|bmp)$/
                 next unless GalleryPost.valid? file
-                write_gallery_page(site, curDir, file)
+                site.gallery << GalleryPost.new(site, site.source, source, file)
+                site.pages << site.gallery.last
             end
+
+            site.gallery.sort!
         else
             raise
         end
-    end
-
-    def write_gallery_page(site, source, file)
-        page = GalleryPost.new(site, site.source, source, file)
-        page.render(site.layouts, site.site_payload)
-        page.write(site.dest)
-        site.pages << page
     end
 end
 

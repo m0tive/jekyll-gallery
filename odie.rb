@@ -1,3 +1,4 @@
+begin; require 'exifr'; rescue LoadError; end
 
 # core extensions
 # ------------------------------------------------------------------------------
@@ -45,7 +46,7 @@ class GalleryPost < Post
     # Returns <Post>
     def initialize(site, base, source, image)
         /^(.*)\.[^\.]*$/ =~ image
-        basename = $1.downcase
+        name = $1.downcase + '.html'
 
         path = source[base.size()..-1] || ''
         path = path[/^\/?[^\/]+\/(.*)$/,1] || ''
@@ -54,7 +55,23 @@ class GalleryPost < Post
         self.image = image
         path
 
-        super(site, base, path, basename + '.html')
+        unless Post.valid? name
+            filepath = File.join source, image
+            date
+            if Kernel.const_defined? :EXIFR and /\.(jpe?g|tiff?)$/ =~ image.downcase
+                ext = $1
+                date = if ext[0] == 'j' then
+                        EXIFR::JPEG.new(filepath).date_time
+                    else
+                        EXIFR::TIFF.new(filepath).date_time
+                    end
+            else
+                File.open(filepath) { |f| date = f.ctime }
+            end
+            name = date.strftime('%Y-%m-%d-') + name
+        end
+
+        super(site, base, path, name )
 
         self.image_url = File.join File.dirname(self.url), self.image
     end
@@ -177,7 +194,6 @@ class GalleryGenerator < Generator
 
             Dir.foreach_r(source) do |curDir, file|
                 next unless file.downcase =~ /\.(?:png|jpe?g|bmp)$/
-                next unless GalleryPost.valid? file
                 site.gallery << GalleryPost.new(site, site.source, source, file)
                 site.pages << site.gallery.last
             end

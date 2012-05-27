@@ -202,6 +202,7 @@ class GalleryGenerator < Generator
 
             site.config = site.config.deep_merge({
                 'gallery' => site.gallery.sort { |a, b| b <=> a },
+                'gallery_old_first' => site.gallery
             })
         else
             raise

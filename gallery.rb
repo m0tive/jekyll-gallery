@@ -186,7 +186,7 @@ class GalleryGenerator < Generator
 
     # Does the generation
     def generate(site)
-        if site.layouts.key? 'gallery_page'
+        if site.layouts.key?('gallery_post') || site.config.key?('gallery_layout')
             dir = site.config['gallery_dir'] || 'gallery'
             source = File.join site.source, '_gallery'
 

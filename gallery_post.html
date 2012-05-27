@@ -1,0 +1,8 @@
+<p>
+    {% if page.previous %}<a href="{{ page.previous.url }}">previous</a>{% endif %}
+    {% if page.next %}<a href="{{ page.next.url }}">next</a>{% endif %}
+</p>
+
+<img src="{{ page.image }}" ></img>
+
+{% if page.image_info %}<p>{{ page.image_info }}</p>{% endif %}

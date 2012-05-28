@@ -84,7 +84,7 @@ class GalleryPost < Post
     #
     def read_yaml(base, name)
         # defer this to another file...
-        info = name.sub(EXT_REGEX, '.txt')
+        info = self.image.sub(EXT_REGEX, '.txt')
         galleryLayout = self.site.config['gallery_layout'] || 'gallery_post.html'
         if File.exists? File.join(@imageSource, info)
             super(@imageSource, info)

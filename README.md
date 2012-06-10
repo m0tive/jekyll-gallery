@@ -1,7 +1,7 @@
 Jekyll Gallery Plugin
 =====================
 
-This plugin adds easy to manage galleries to [Jekyll](http://jekyllrb.com).
+This plugin adds easy to manage galleries to [Jekyll](http://jekyllrb.com). There is a basic example of the plugin in use [here](http://m0tive.github.com/jekyll-gallery-example/).
 
 Read more about Jekyll plugins in the [Jekyll docs](https://github.com/mojombo/jekyll/wiki/Plugins).
 

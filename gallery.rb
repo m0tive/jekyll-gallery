@@ -57,7 +57,7 @@ class GalleryPost < Post
 
         unless Post.valid? name
             filepath = File.join source, image
-            date
+            date = nil
             if Kernel.const_defined? :EXIFR and /\.(jpe?g|tiff?)$/ =~ image.downcase
                 ext = $1
                 date = if ext[0] == 'j' then
@@ -65,9 +65,11 @@ class GalleryPost < Post
                     else
                         EXIFR::TIFF.new(filepath).date_time
                     end
-            else
+            end
+            if date.nil?
                 File.open(filepath) { |f| date = f.ctime }
             end
+            raise if date.nil?
             name = date.strftime('%Y-%m-%d-') + name
         end
 
